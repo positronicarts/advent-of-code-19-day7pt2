@@ -88,10 +88,10 @@ impl Computer {
         instruction
     }
 
-    fn run(mut self) -> Result<i64, i64> {
+    fn run(&mut self) -> Result<i64, i64> {
 
         println!("Inputs {:?}", self.inputs);
-        self.index = 0;
+        //self.index = 0;
 
         loop {
             self.instruction_chars = self.get_instruction();
@@ -113,8 +113,8 @@ impl Computer {
                 }
                 OpCode::Output => {
                     let v1 = self.get_next_value();
-                    //return Err(v1); 
-                    self.inputs.push(v1);
+                    return Err(v1); 
+                    //self.inputs.push(v1);
                 }
                 OpCode::JumpIfZ => {
                     let (v1, v2) = (self.get_next_value(), self.get_next_value());
@@ -172,7 +172,7 @@ fn main() {
 
     let max = orderings
         .into_iter()
-        .map(|mut ordering| {
+        .map(|ordering| {
             println!("Ordering {:?}", ordering);
 
             let mut amps = vec![computer.clone(), computer.clone(), computer.clone(), computer.clone(), computer.clone()];
@@ -184,31 +184,31 @@ fn main() {
             amps[0].inputs.push(0);
         
             let mut index = 0;
-            let mut next_input = 0;
+            let mut next_input;
             
             loop {     
-                // amps[index % 5].inputs.insert(0, ordering[index % 5]);
+                //amps[index % 5].inputs.insert(0, ordering[index % 5]);
 
                 match amps[index % 5]
-                    .clone()
                     .run() {
                         Err(x) => {
                             next_input = x;
                         },
                         Ok(x) => {
                             println!("-> {:?}", x);
-                            next_input = x;
+                            //next_input = x;
+                            return x;
                         }
                     }
                 index = index + 1;
 
-                if index == 5 {
-                    return next_input;
-                }
+                // if index == 5 {
+                //     return next_input;
+                // }
                 amps[index % 5].inputs.push(next_input);
             }
-            println!("-> {:?}", next_input);
-            next_input
+            // println!("-> {:?}", next_input);
+            // next_input
         })
         .max();
 
