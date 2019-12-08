@@ -52,6 +52,7 @@ struct Computer {
     memory: Vec<i64>,
     index: usize,
     instruction_chars: Vec<char>,
+    inputs: Vec<i64>,
 }
 
 impl Computer {
@@ -87,9 +88,9 @@ impl Computer {
         instruction
     }
 
-    fn run(mut self, mut inputs: Vec<i64>) -> Result<i64, i64> {
+    fn run(mut self) -> Result<i64, i64> {
 
-        println!("Inputs {:?}", inputs);
+        println!("Inputs {:?}", self.inputs);
         self.index = 0;
 
         loop {
@@ -107,11 +108,13 @@ impl Computer {
                     self.write(val);
                 }
                 OpCode::Input => {
-                    self.write(inputs.remove(0));
+                    let input = self.inputs.remove(0);
+                    self.write(input);
                 }
                 OpCode::Output => {
                     let v1 = self.get_next_value();
-                    return Err(v1); //inputs.push(v1);
+                    //return Err(v1); 
+                    self.inputs.push(v1);
                 }
                 OpCode::JumpIfZ => {
                     let (v1, v2) = (self.get_next_value(), self.get_next_value());
@@ -136,8 +139,8 @@ impl Computer {
                     self.write(if v1 == v2 { 1 } else { 0 });
                 }
                 OpCode::Exit => {
-                    panic!("Exiting!");
-                    return Ok(inputs.pop().unwrap());
+                    //panic!("Exiting!");
+                    return Ok(self.inputs.pop().unwrap());
                 }
             };
         }
@@ -166,35 +169,43 @@ fn main() {
         }
     }
 
-    let amps = vec![computer.clone(), computer.clone(), computer.clone(), computer.clone(), computer.clone()];
 
     let max = orderings
         .into_iter()
         .map(|mut ordering| {
             println!("Ordering {:?}", ordering);
 
+            let mut amps = vec![computer.clone(), computer.clone(), computer.clone(), computer.clone(), computer.clone()];
+
+            for ii in 0..5 {
+                amps[ii].inputs.push(ordering[ii]);
+            }
+
+            amps[0].inputs.push(0);
+        
             let mut index = 0;
             let mut next_input = 0;
             
-            loop {
-                let mut full_inputs = if index < 5 {
-                    vec![ordering[index % 5], next_input]
-                } else {
-                    vec![ordering[index % 5], next_input]
-                };
-                //full_inputs.append(vec![next_input]);
+            loop {     
+                // amps[index % 5].inputs.insert(0, ordering[index % 5]);
+
                 match amps[index % 5]
                     .clone()
-                    .run(full_inputs) {
+                    .run() {
                         Err(x) => {
                             next_input = x;
                         },
                         Ok(x) => {
                             println!("-> {:?}", x);
-                            return x;
+                            next_input = x;
                         }
                     }
-                index = (index + 1);
+                index = index + 1;
+
+                if index == 5 {
+                    return next_input;
+                }
+                amps[index % 5].inputs.push(next_input);
             }
             println!("-> {:?}", next_input);
             next_input
